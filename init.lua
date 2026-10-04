@@ -629,11 +629,14 @@ do
   vim.g.netrw_winsize = 25 -- 25% width for the tree window
   vim.g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]] -- hide dotfiles
 
-  -- Toggle a left sidebar explorer (netrw). Press again to close.
-  vim.keymap.set('n', '<leader>e', '<cmd>Lexplore<cr>', { desc = 'Toggle file explorer (netrw)' })
+  -- LazyVim-style explorer keys: <leader>e at the project root, <leader>E at cwd.
+  -- netrw's Lexplore opens a toggleable sidebar; pass the directory to root it.
+  local function root_dir()
+    return vim.fs.root(0, { '.git', 'go.mod', 'package.json', 'pyproject.toml' }) or vim.uv.cwd()
+  end
 
-  -- Open the explorer in this window.
-  vim.keymap.set('n', '<leader>E', '<cmd>Explore<cr>', { desc = 'File explorer' })
+  vim.keymap.set('n', '<leader>e', function() vim.cmd('Lexplore ' .. vim.fn.fnameescape(root_dir())) end, { desc = 'Explorer (root dir)' })
+  vim.keymap.set('n', '<leader>E', function() vim.cmd('Lexplore ' .. vim.fn.fnameescape(vim.uv.cwd())) end, { desc = 'Explorer (cwd)' })
 end
 
 -- ============================================================

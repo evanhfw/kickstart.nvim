@@ -61,8 +61,8 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 
 | Key | Action |
 | --- | --- |
-| `<leader>e` | Toggle netrw sidebar (Lexplore) |
-| `<leader>E` | Open netrw in current dir (Explore) |
+| `<leader>e` | Explorer at project root (netrw sidebar) |
+| `<leader>E` | Explorer at cwd |
 | `<leader>f` | Format buffer |
 | `<leader>q` | Diagnostics to quickfix list |
 | `<leader>vs` | Select Python virtualenv |
