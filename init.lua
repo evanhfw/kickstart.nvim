@@ -412,9 +412,13 @@ do
   -- LazyVim uses Snacks.lazygit; here we open lazygit in a terminal tab.
   if vim.fn.executable 'lazygit' == 1 then
     local function lazygit(cwd)
-      local root = vim.fs.root(0, '.git')
+      local root = vim.fs.root(0, { '.git', 'go.mod', 'package.json', 'pyproject.toml' })
       vim.cmd.tabnew()
-      vim.fn.termopen('lazygit', { cwd = (cwd == 'root' and root) or vim.uv.cwd() })
+      vim.fn.termopen('lazygit', {
+        cwd = (cwd == 'root' and root) or vim.uv.cwd(),
+        -- Let lazygit open files in this Neovim instance instead of $EDITOR.
+        env = { EDITOR = ('nvim --server %s --remote-silent'):format(vim.v.servername) },
+      })
       vim.cmd.startinsert()
     end
     vim.keymap.set('n', '<leader>gg', function() lazygit 'root' end, { desc = 'Lazygit (root dir)' })
