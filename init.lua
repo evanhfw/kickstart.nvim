@@ -122,6 +122,9 @@ do
   --  Schedule the setting after `UiEnter` because it can increase startup-time.
   --  Remove this option if you want your OS clipboard to remain independent.
   --  See `:help 'clipboard'`
+  -- Over SSH there is no local wayland/x11 clipboard; use OSC 52 so Ghostty
+  -- (or any OSC52-capable terminal) writes to the real local clipboard.
+  if vim.env.SSH_TTY or vim.env.SSH_CONNECTION then vim.g.clipboard = 'osc52' end
   vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 
   -- Enable break indent
