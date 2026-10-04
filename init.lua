@@ -329,6 +329,41 @@ end
 local function gh(repo) return 'https://github.com/' .. repo end
 
 -- ============================================================
+-- ROOT DETECTION (LazyVim-style)
+-- LazyVim resolves the project root as: LSP root, then a pattern match
+-- (.git / lua), then cwd. Used to root the picker, explorer and lazygit.
+-- ============================================================
+local function root(opts)
+  opts = opts or {}
+  local buf = opts.buf or vim.api.nvim_get_current_buf()
+  local bufpath = vim.api.nvim_buf_get_name(buf)
+  bufpath = bufpath ~= '' and vim.uv.fs_realpath(bufpath) or nil
+
+  if not opts.git_only then
+    -- 1. LSP workspace root
+    if bufpath then
+      for _, client in ipairs(vim.lsp.get_clients { bufnr = buf }) do
+        for _, folder in ipairs(client.config.workspace_folders or {}) do
+          local ws = vim.uri_to_fname(folder.uri)
+          if bufpath:find(ws, 1, true) == 1 then return ws end
+        end
+        if client.root_dir and bufpath:find(client.root_dir, 1, true) == 1 then return client.root_dir end
+      end
+    end
+    -- 2. Pattern match upward (.git, lua)
+    local pattern = vim.fs.find({ '.git', 'lua' }, { path = bufpath or vim.uv.cwd(), upward = true })[1]
+    if pattern then return vim.fs.dirname(pattern) end
+  else
+    -- lazygit wants a real git root even when LSP has a broader root.
+    local git = vim.fs.find('.git', { path = bufpath or vim.uv.cwd(), upward = true })[1]
+    if git then return vim.fs.dirname(git) end
+  end
+
+  -- 3. cwd
+  return vim.uv.cwd()
+end
+
+-- ============================================================
 -- SECTION 4: UI / CORE UX PLUGINS
 -- guess-indent, gitsigns, which-key, colorscheme, todo-comments, mini modules
 -- ============================================================
@@ -412,10 +447,9 @@ do
   -- LazyVim uses Snacks.lazygit; here we open lazygit in a terminal tab.
   if vim.fn.executable 'lazygit' == 1 then
     local function lazygit(cwd)
-      local root = vim.fs.root(0, { '.git', 'go.mod', 'package.json', 'pyproject.toml' })
       vim.cmd.tabnew()
       vim.fn.termopen('lazygit', {
-        cwd = (cwd == 'root' and root) or vim.uv.cwd(),
+        cwd = (cwd == 'root' and root { git_only = true }) or vim.uv.cwd(),
         -- Let lazygit open files in this Neovim instance instead of $EDITOR.
         env = { EDITOR = ('nvim --server %s --remote-silent'):format(vim.v.servername) },
       })
@@ -579,7 +613,18 @@ do
 
   -- See `:help telescope.builtin`
   local builtin = require 'telescope.builtin'
-  vim.keymap.set('n', '<leader><space>', builtin.find_files, { desc = 'Find Files (root dir)' })
+
+  -- LazyVim.pick semantics with telescope: root the picker at the project root,
+  -- and use git_files vs find_files depending on whether the root is a git repo.
+  local function pick(builtin_name, opts)
+    opts = vim.tbl_extend('force', { cwd = root(), follow = true }, opts or {})
+    if builtin_name == 'files' then
+      builtin_name = vim.fn.isdirectory(opts.cwd .. '/.git') == 1 and 'git_files' or 'find_files'
+    end
+    builtin[builtin_name](opts)
+  end
+
+  vim.keymap.set('n', '<leader><space>', function() pick 'files' end, { desc = 'Find Files (root dir)' })
   vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Switch Buffer' })
 
   -- Add Telescope-based LSP pickers when an LSP attaches to a buffer.
@@ -616,8 +661,8 @@ do
     end,
   })
 
-  -- Grep the project root (LazyVim-style <leader>/)
-  vim.keymap.set('n', '<leader>/', builtin.live_grep, { desc = '[/] Grep (root dir)' })
+  -- Grep the project root (LazyVim's <leader>/ = "Grep (Root Dir)")
+  vim.keymap.set('n', '<leader>/', function() pick 'live_grep' end, { desc = 'Grep (root dir)' })
 end
 
 -- ============================================================
@@ -634,13 +679,14 @@ do
   vim.g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]] -- hide dotfiles
 
   -- LazyVim-style explorer keys: <leader>e at the project root, <leader>E at cwd.
-  -- netrw's Lexplore opens a toggleable sidebar; pass the directory to root it.
-  local function root_dir()
-    return vim.fs.root(0, { '.git', 'go.mod', 'package.json', 'pyproject.toml' }) or vim.uv.cwd()
-  end
+  -- netrw's Lexplore is a toggle, but only when called without a directory, so
+  -- <leader>e cds to the root first and then toggles.
+  vim.keymap.set('n', '<leader>e', function()
+    vim.cmd('cd ' .. vim.fn.fnameescape(root()))
+    vim.cmd 'Lexplore'
+  end, { desc = 'Explorer (root dir)' })
 
-  vim.keymap.set('n', '<leader>e', function() vim.cmd('Lexplore ' .. vim.fn.fnameescape(root_dir())) end, { desc = 'Explorer (root dir)' })
-  vim.keymap.set('n', '<leader>E', function() vim.cmd('Lexplore ' .. vim.fn.fnameescape(vim.uv.cwd())) end, { desc = 'Explorer (cwd)' })
+  vim.keymap.set('n', '<leader>E', '<cmd>Lexplore<cr>', { desc = 'Explorer (cwd)' })
 end
 
 -- ============================================================
