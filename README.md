@@ -53,7 +53,8 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 
 | Key | Action |
 | --- | --- |
-| `<leader><leader>` | Find existing buffers |
+| `<leader><space>` | Find files (root dir) |
+| `<leader>,` | Switch buffer |
 | `<leader>/` | Grep (root dir) |
 
 ### Files, windows, navigation

@@ -557,7 +557,8 @@ do
 
   -- See `:help telescope.builtin`
   local builtin = require 'telescope.builtin'
-  vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+  vim.keymap.set('n', '<leader><space>', builtin.find_files, { desc = 'Find Files (root dir)' })
+  vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Switch Buffer' })
 
   -- Add Telescope-based LSP pickers when an LSP attaches to a buffer.
   -- If you later switch picker plugins, this is where to update these mappings.
