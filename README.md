@@ -38,7 +38,7 @@ Then install the Mason-managed tools inside Neovim:
 | Lint | nvim-lint: markdownlint (markdown), ruff (Python), golangci-lint (Go) |
 | Format | conform.nvim — format-on-save disabled, manual with `<leader>f` |
 | Editing | mini.ai, mini.surround, nvim-autopairs, nvim-treesitter (auto-installs parsers) |
-| Navigation | harpoon2, mini.files, venv-selector |
+| Navigation | harpoon2, venv-selector |
 
 Notes:
 
@@ -53,26 +53,13 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 
 | Key | Action |
 | --- | --- |
-| `<leader>sf` | Find files |
-| `<leader>sg` | Live grep |
-| `<leader>sw` | Search word under cursor |
-| `<leader>s/` | Live grep in open files |
-| `<leader>sd` | Diagnostics |
-| `<leader>sh` | Help pages |
-| `<leader>sk` | Keymaps |
-| `<leader>sc` | Commands |
-| `<leader>ss` | Telescope pickers |
-| `<leader>sr` | Resume last search |
-| `<leader>s.` | Recent files |
-| `<leader>sn` | Neovim config files |
-| `<leader>/` | Fuzzy search in current buffer |
-| `<leader><leader>` | Open buffers |
+| `<leader><leader>` | Find existing buffers |
+| `<leader>/` | Grep (root dir) |
 
 ### Files, windows, navigation
 
 | Key | Action |
 | --- | --- |
-| `<leader>e` | mini.files explorer |
 | `<leader>f` | Format buffer |
 | `<leader>q` | Diagnostics to quickfix list |
 | `<leader>vs` | Select Python virtualenv |
