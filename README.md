@@ -72,23 +72,24 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 
 | Key | Action |
 | --- | --- |
-| `<leader>a` | Add current file |
-| `<C-e>` | Toggle quick menu |
-| `<leader>1`–`<leader>4` | Jump to marked file |
+| `<leader>H` | Add current file |
+| `<leader>h` | Toggle quick menu |
+| `<leader>1`–`<leader>9` | Jump to marked file |
 
 ### Git (gitsigns, on buffers in a repo)
 
 | Key | Action |
 | --- | --- |
-| `<leader>hs` / `<leader>hr` | Stage / reset hunk |
-| `<leader>hS` / `<leader>hR` | Stage / reset whole buffer |
-| `<leader>hp` / `<leader>hi` | Preview hunk (float / inline) |
-| `<leader>hb` | Blame line |
-| `<leader>hd` / `<leader>hD` | Diff against index / last commit |
-| `<leader>hq` / `<leader>hQ` | Hunks to quickfix (file / repo) |
-| `]c` / `[c` | Next / previous hunk |
+| `<leader>ghs` / `<leader>ghr` | Stage / reset hunk |
+| `<leader>ghS` / `<leader>ghR` | Stage / reset whole buffer |
+| `<leader>ghu` | Undo stage hunk |
+| `<leader>ghp` | Preview hunk inline |
+| `<leader>ghb` / `<leader>ghB` | Blame line / buffer |
+| `<leader>ghd` / `<leader>ghD` | Diff this / diff this against `~` |
+| `]h` / `[h` | Next / previous hunk |
+| `]H` / `[H` | First / last hunk |
 | `ih` | Select hunk (text object) |
-| `<leader>tb` / `<leader>tw` | Toggle blame line / word diff |
+| `<leader>gg` / `<leader>gG` | Lazygit (root dir / cwd) |
 
 ### LSP (when a server attaches)
 
