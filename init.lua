@@ -303,11 +303,6 @@ do
       local kind = ev.data.kind
       if kind ~= 'install' and kind ~= 'update' then return end
 
-      if name == 'telescope-fzf-native.nvim' and vim.fn.executable 'make' == 1 then
-        run_build(name, { 'make' }, ev.data.path)
-        return
-      end
-
       if name == 'LuaSnip' then
         if vim.fn.has 'win32' ~= 1 and vim.fn.executable 'make' == 1 then run_build(name, { 'make', 'install_jsregexp' }, ev.data.path) end
         return
@@ -444,19 +439,9 @@ do
   }
 
   -- Lazygit, mirroring LazyVim's <leader>gg / <leader>gG (root dir / cwd).
-  -- LazyVim uses Snacks.lazygit; here we open lazygit in a terminal tab.
   if vim.fn.executable 'lazygit' == 1 then
-    local function lazygit(cwd)
-      vim.cmd.tabnew()
-      vim.fn.termopen('lazygit', {
-        cwd = (cwd == 'root' and root { git_only = true }) or vim.uv.cwd(),
-        -- Let lazygit open files in this Neovim instance instead of $EDITOR.
-        env = { EDITOR = ('nvim --server %s --remote-silent'):format(vim.v.servername) },
-      })
-      vim.cmd.startinsert()
-    end
-    vim.keymap.set('n', '<leader>gg', function() lazygit 'root' end, { desc = 'Lazygit (root dir)' })
-    vim.keymap.set('n', '<leader>gG', function() lazygit 'cwd' end, { desc = 'Lazygit (cwd)' })
+    vim.keymap.set('n', '<leader>gg', function() Snacks.lazygit { cwd = root { git_only = true } } end, { desc = 'Lazygit (root dir)' })
+    vim.keymap.set('n', '<leader>gG', function() Snacks.lazygit { cwd = vim.uv.cwd() } end, { desc = 'Lazygit (cwd)' })
   end
 
   -- Useful plugin to show you pending keybinds.
@@ -468,6 +453,9 @@ do
     -- Document existing key chains
     spec = {
       { '<leader>t', group = '[T]oggle' },
+      { '<leader>f', group = '[F]ind' },
+      { '<leader>s', group = '[S]earch' },
+      { '<leader>c', group = '[C]ode' },
       { '<leader>g', group = 'Git', mode = { 'n', 'x' } },
       { '<leader>gh', group = 'Git Hunks', mode = { 'n', 'x' } },
       { '<leader>b', group = 'Buffer' },
@@ -480,7 +468,7 @@ do
   -- Change the name of the colorscheme plugin below, and then
   -- change the command under that to load whatever the name of that colorscheme is.
   --
-  -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
+  -- If you want to see what colorschemes are already installed, use `<leader>uC`.
   vim.pack.add { gh 'folke/tokyonight.nvim' }
   ---@diagnostic disable-next-line: missing-fields
   require('tokyonight').setup {
@@ -508,7 +496,7 @@ do
   -- If a nerd font is available, load the icons module for pretty icons in various plugins.
   if vim.g.have_nerd_font then
     require('mini.icons').setup()
-    -- Used for backwards compatibility with plugins that require `nvim-web-devicons` (e.g. telescope.nvim)
+    -- Used for backwards compatibility with plugins that require `nvim-web-devicons` (e.g. snacks.picker)
     MiniIcons.mock_nvim_web_devicons()
   end
 
@@ -552,143 +540,116 @@ do
 end
 
 -- ============================================================
--- SECTION 5: SEARCH & NAVIGATION
--- Telescope setup, keymaps, LSP picker mappings
+-- ============================================================
+-- SECTION 5: SEARCH & NAVIGATION (snacks.picker, as in LazyVim)
+-- Keymaps mirror LazyVim's editor.snacks_picker extra:
+--   <leader><space> files(root)  <leader>/ grep(root)  <leader>, buffers
+--   <leader>ff/fg/fr ...         <leader>sg/sd/sw ...  <leader>ss symbols
 -- ============================================================
 do
-  -- [[ Fuzzy Finder (files, lsp, etc) ]]
-  --
-  -- Telescope is a fuzzy finder that comes with a lot of different things that
-  -- it can fuzzy find! It's more than just a "file finder", it can search
-  -- many different aspects of Neovim, your workspace, LSP, and more!
-  --
-  -- There are lots of other alternative pickers (like snacks.picker, or fzf-lua)
-  -- so feel free to experiment and see what you like!
-  --
-  -- The easiest way to use Telescope, is to start by doing something like:
-  --  :Telescope help_tags
-  --
-  -- After running this command, a window will open up and you're able to
-  -- type in the prompt window. You'll see a list of `help_tags` options and
-  -- a corresponding preview of the help.
-  --
-  -- Two important keymaps to use while in Telescope are:
-  --  - Insert mode: <c-/>
-  --  - Normal mode: ?
-  --
-  -- This opens a window that shows you all of the keymaps for the current
-  -- Telescope picker. This is really useful to discover what Telescope can
-  -- do as well as how to actually do it!
+  -- plenary is still needed by harpoon (it used to come in via telescope).
+  vim.pack.add { gh 'nvim-lua/plenary.nvim', gh 'folke/snacks.nvim' }
 
-  ---@type (string | vim.pack.Spec)[]
-  local telescope_plugins = {
-    gh 'nvim-lua/plenary.nvim',
-    gh 'nvim-telescope/telescope.nvim',
-    gh 'nvim-telescope/telescope-ui-select.nvim',
-  }
-  if vim.fn.executable 'make' == 1 then table.insert(telescope_plugins, gh 'nvim-telescope/telescope-fzf-native.nvim') end
-
-  -- NOTE: You can install multiple plugins at once
-  vim.pack.add(telescope_plugins)
-
-  -- See `:help telescope` and `:help telescope.setup()`
-  require('telescope').setup {
-    -- You can put your default mappings / updates / etc. in here
-    --  All the info you're looking for is in `:help telescope.setup()`
-    --
-    -- defaults = {
-    --   mappings = {
-    --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-    --   },
-    -- },
-    -- pickers = {}
-    extensions = {
-      ['ui-select'] = { require('telescope.themes').get_dropdown() },
-    },
+  require('snacks').setup {
+    -- Only the modules we asked for; everything else stays as it was.
+    picker = {},
+    explorer = {},
+    notifier = {},
   }
 
-  -- Enable Telescope extensions if they are installed
-  pcall(require('telescope').load_extension, 'fzf')
-  pcall(require('telescope').load_extension, 'ui-select')
-
-  -- See `:help telescope.builtin`
-  local builtin = require 'telescope.builtin'
-
-  -- LazyVim.pick semantics with telescope: root the picker at the project root,
-  -- and use git_files vs find_files depending on whether the root is a git repo.
-  local function pick(builtin_name, opts)
-    opts = vim.tbl_extend('force', { cwd = root(), follow = true }, opts or {})
-    if builtin_name == 'files' then
-      builtin_name = vim.fn.isdirectory(opts.cwd .. '/.git') == 1 and 'git_files' or 'find_files'
+  -- LazyVim.pick("files") semantics: root the picker at the project root and
+  -- use git_files when the root is a git repo, find_files otherwise.
+  local function pick(source, opts)
+    opts = vim.tbl_extend('force', { cwd = root() }, opts or {})
+    if source == 'files' then
+      source = vim.fn.isdirectory(opts.cwd .. '/.git') == 1 and 'git_files' or 'files'
     end
-    builtin[builtin_name](opts)
+    return Snacks.picker.pick(source, opts)
   end
 
-  vim.keymap.set('n', '<leader><space>', function() pick 'files' end, { desc = 'Find Files (root dir)' })
-  vim.keymap.set('n', '<leader>,', builtin.buffers, { desc = 'Switch Buffer' })
+  -- stylua: ignore
+  local keys = {
+    { '<leader>,', function() Snacks.picker.buffers() end, desc = 'Buffers' },
+    { '<leader>/', function() pick 'grep' end, desc = 'Grep (root dir)' },
+    { '<leader>:', function() Snacks.picker.command_history() end, desc = 'Command History' },
+    { '<leader><space>', function() pick 'files' end, desc = 'Find Files (root dir)' },
+    { '<leader>n', function() Snacks.picker.notifications() end, desc = 'Notification History' },
+    -- find
+    { '<leader>fb', function() Snacks.picker.buffers() end, desc = 'Buffers' },
+    { '<leader>fB', function() Snacks.picker.buffers { hidden = true, nofile = true } end, desc = 'Buffers (all)' },
+    { '<leader>fc', function() pick('files', { cwd = vim.fn.stdpath 'config' }) end, desc = 'Find Config File' },
+    { '<leader>ff', function() pick 'files' end, desc = 'Find Files (root dir)' },
+    { '<leader>fF', function() Snacks.picker.files { cwd = vim.uv.cwd() } end, desc = 'Find Files (cwd)' },
+    { '<leader>fg', function() Snacks.picker.git_files() end, desc = 'Find Files (git-files)' },
+    { '<leader>fr', function() Snacks.picker.recent() end, desc = 'Recent' },
+    { '<leader>fR', function() Snacks.picker.recent { filter = { cwd = true } } end, desc = 'Recent (cwd)' },
+    { '<leader>fp', function() Snacks.picker.projects() end, desc = 'Projects' },
+    -- git
+    { '<leader>gd', function() Snacks.picker.git_diff() end, desc = 'Git Diff (hunks)' },
+    { '<leader>gD', function() Snacks.picker.git_diff { base = 'origin', group = true } end, desc = 'Git Diff (origin)' },
+    { '<leader>gs', function() Snacks.picker.git_status() end, desc = 'Git Status' },
+    { '<leader>gS', function() Snacks.picker.git_stash() end, desc = 'Git Stash' },
+    -- grep
+    { '<leader>sb', function() Snacks.picker.grep_buffers() end, desc = 'Grep Open Buffers' },
+    { '<leader>sg', function() pick 'grep' end, desc = 'Grep (root dir)' },
+    { '<leader>sG', function() Snacks.picker.grep { cwd = vim.uv.cwd() } end, desc = 'Grep (cwd)' },
+    { '<leader>sw', function() pick 'grep_word' end, desc = 'Visual selection or word (root dir)', mode = { 'n', 'x' } },
+    { '<leader>sW', function() Snacks.picker.grep_word { cwd = vim.uv.cwd() } end, desc = 'Visual selection or word (cwd)', mode = { 'n', 'x' } },
+    -- search
+    { '<leader>s"', function() Snacks.picker.registers() end, desc = 'Registers' },
+    { '<leader>s/', function() Snacks.picker.search_history() end, desc = 'Search History' },
+    { '<leader>sa', function() Snacks.picker.autocmds() end, desc = 'Autocmds' },
+    { '<leader>sc', function() Snacks.picker.command_history() end, desc = 'Command History' },
+    { '<leader>sC', function() Snacks.picker.commands() end, desc = 'Commands' },
+    { '<leader>sd', function() Snacks.picker.diagnostics() end, desc = 'Diagnostics' },
+    { '<leader>sD', function() Snacks.picker.diagnostics_buffer() end, desc = 'Buffer Diagnostics' },
+    { '<leader>sh', function() Snacks.picker.help() end, desc = 'Help Pages' },
+    { '<leader>sH', function() Snacks.picker.highlights() end, desc = 'Highlights' },
+    { '<leader>si', function() Snacks.picker.icons() end, desc = 'Icons' },
+    { '<leader>sj', function() Snacks.picker.jumps() end, desc = 'Jumps' },
+    { '<leader>sk', function() Snacks.picker.keymaps() end, desc = 'Keymaps' },
+    { '<leader>sl', function() Snacks.picker.loclist() end, desc = 'Location List' },
+    { '<leader>sM', function() Snacks.picker.man() end, desc = 'Man Pages' },
+    { '<leader>sm', function() Snacks.picker.marks() end, desc = 'Marks' },
+    { '<leader>sR', function() Snacks.picker.resume() end, desc = 'Resume' },
+    { '<leader>sq', function() Snacks.picker.qflist() end, desc = 'Quickfix List' },
+    { '<leader>su', function() Snacks.picker.undo() end, desc = 'Undotree' },
+    -- ui
+    { '<leader>uC', function() Snacks.picker.colorschemes() end, desc = 'Colorschemes' },
+  }
+  for _, k in ipairs(keys) do
+    vim.keymap.set(k.mode or 'n', k[1], k[2], { desc = k.desc })
+  end
 
-  -- Add Telescope-based LSP pickers when an LSP attaches to a buffer.
-  -- If you later switch picker plugins, this is where to update these mappings.
+  -- Snacks-based LSP pickers when an LSP attaches to a buffer.
   vim.api.nvim_create_autocmd('LspAttach', {
-    group = vim.api.nvim_create_augroup('telescope-lsp-attach', { clear = true }),
+    group = vim.api.nvim_create_augroup('snacks-lsp-attach', { clear = true }),
     callback = function(event)
       local buf = event.buf
+      local function map(lhs, rhs, desc)
+        vim.keymap.set('n', lhs, rhs, { buffer = buf, desc = desc })
+      end
 
-      -- Find references for the word under your cursor.
-      vim.keymap.set('n', 'grr', builtin.lsp_references, { buffer = buf, desc = '[G]oto [R]eferences' })
-
-      -- Jump to the implementation of the word under your cursor.
-      -- Useful when your language has ways of declaring types without an actual implementation.
-      vim.keymap.set('n', 'gri', builtin.lsp_implementations, { buffer = buf, desc = '[G]oto [I]mplementation' })
-
-      -- Jump to the definition of the word under your cursor.
-      -- This is where a variable was first declared, or where a function is defined, etc.
-      -- To jump back, press <C-t>.
-      vim.keymap.set('n', 'grd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
-
-      -- Fuzzy find all the symbols in your current document.
-      -- Symbols are things like variables, functions, types, etc.
-      vim.keymap.set('n', 'gO', builtin.lsp_document_symbols, { buffer = buf, desc = 'Open Document Symbols' })
-
-      -- Fuzzy find all the symbols in your current workspace.
-      -- Similar to document symbols, except searches over your entire project.
-      vim.keymap.set('n', 'gW', builtin.lsp_dynamic_workspace_symbols, { buffer = buf, desc = 'Open Workspace Symbols' })
-
-      -- Jump to the type of the word under your cursor.
-      -- Useful when you're not sure what type a variable is and you want to see
-      -- the definition of its *type*, not where it was *defined*.
-      vim.keymap.set('n', 'grt', builtin.lsp_type_definitions, { buffer = buf, desc = '[G]oto [T]ype Definition' })
+      map('grr', function() Snacks.picker.lsp_references() end, '[G]oto [R]eferences')
+      map('gri', function() Snacks.picker.lsp_implementations() end, '[G]oto [I]mplementation')
+      map('grd', function() Snacks.picker.lsp_definitions() end, '[G]oto [D]efinition')
+      map('gO', function() Snacks.picker.lsp_symbols() end, 'Open Document Symbols')
+      map('gW', function() Snacks.picker.lsp_workspace_symbols() end, 'Open Workspace Symbols')
+      map('grt', function() Snacks.picker.lsp_type_definitions() end, '[G]oto [T]ype Definition')
+      map('<leader>ss', function() Snacks.picker.lsp_symbols() end, 'LSP Symbols')
+      map('<leader>sS', function() Snacks.picker.lsp_workspace_symbols() end, 'LSP Workspace Symbols')
     end,
   })
-
-  -- Grep the project root (LazyVim's <leader>/ = "Grep (Root Dir)")
-  vim.keymap.set('n', '<leader>/', function() pick 'live_grep' end, { desc = 'Grep (root dir)' })
 end
 
 -- ============================================================
--- SECTION 6: FILE EXPLORER (netrw, built-in)
--- https://vonheikemen.github.io/devlog/tools/using-netrw-vim-builtin-file-explorer/
+-- SECTION 6: FILE EXPLORER (snacks.explorer, as in LazyVim)
 -- ============================================================
 do
-  -- Sane defaults: tree listing, no banner, hide dotfiles and VCS noise.
-  -- Keep the browsing directory in sync with the current directory.
-  vim.g.netrw_banner = 0
-  vim.g.netrw_liststyle = 3 -- tree view
-  vim.g.netrw_altv = 1 -- i<C-w> opens vsplit to the right
-  vim.g.netrw_winsize = 25 -- 25% width for the tree window
-  vim.g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]] -- hide dotfiles
-
-  -- LazyVim-style explorer keys: <leader>e at the project root, <leader>E at cwd.
-  -- netrw's Lexplore is a toggle, but only when called without a directory, so
-  -- <leader>e cds to the root first and then toggles.
-  vim.keymap.set('n', '<leader>e', function()
-    vim.cmd('cd ' .. vim.fn.fnameescape(root()))
-    vim.cmd 'Lexplore'
-  end, { desc = 'Explorer (root dir)' })
-
-  vim.keymap.set('n', '<leader>E', '<cmd>Lexplore<cr>', { desc = 'Explorer (cwd)' })
+  -- LazyVim's <leader>e / <leader>E: snacks explorer at root dir / cwd.
+  vim.keymap.set('n', '<leader>e', function() Snacks.explorer { cwd = root() } end, { desc = 'Explorer (root dir)' })
+  vim.keymap.set('n', '<leader>E', function() Snacks.explorer() end, { desc = 'Explorer (cwd)' })
 end
-
 -- ============================================================
 -- SECTION 7: LSP
 -- LSP keymaps, server configuration, Mason tools installations
@@ -915,7 +876,8 @@ do
     },
   }
 
-  vim.keymap.set({ 'n', 'v' }, '<leader>f', function() require('conform').format { async = true } end, { desc = '[F]ormat buffer' })
+  -- LazyVim's format key (was <leader>f, which LazyVim uses for the Find group)
+  vim.keymap.set({ 'n', 'v' }, '<leader>cf', function() require('conform').format { async = true } end, { desc = '[C]ode [F]ormat buffer' })
 end
 
 -- ============================================================

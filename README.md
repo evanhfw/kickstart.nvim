@@ -32,13 +32,13 @@ Then install the Mason-managed tools inside Neovim:
 | Area | Details |
 | --- | --- |
 | UI | tokyonight-night, mini.statusline, which-key, indent-blankline, todo-comments, gitsigns |
-| Search | telescope (+ fzf-native, ui-select) |
+| Search | snacks.picker — LazyVim's keymaps (`<leader><leader>`/`ff`/`fg`/`sg`/`sd`/`sw`/`ss` …) |
 | LSP | lua_ls, gopls, pyright — auto-installed and enabled via Mason |
 | Completion | blink.cmp (rust fuzzy matcher), LuaSnip, friendly-snippets |
 | Lint | nvim-lint: markdownlint (markdown), ruff (Python), golangci-lint (Go) |
-| Format | conform.nvim — format-on-save disabled, manual with `<leader>f` |
+| Format | conform.nvim — format-on-save disabled, manual with `<leader>cf` |
 | Editing | mini.ai, mini.surround, nvim-autopairs, nvim-treesitter (auto-installs parsers) |
-| Navigation | harpoon2, venv-selector, netrw |
+| Navigation | harpoon2, venv-selector, snacks.explorer |
 
 Notes:
 
@@ -49,21 +49,28 @@ Notes:
 
 Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 
-### Search (telescope)
+### Search (snacks.picker, LazyVim keymaps)
 
 | Key | Action |
 | --- | --- |
-| `<leader><space>` | Find files (root dir) |
-| `<leader>,` | Switch buffer |
-| `<leader>/` | Grep (root dir) |
+| `<leader><leader>` / `<leader><space>` | Find files (root dir) |
+| `<leader>ff` / `<leader>fF` | Find files (root dir / cwd) |
+| `<leader>fg` / `<leader>fr` | Git files / recent |
+| `<leader>,` / `<leader>fb` | Switch buffer |
+| `<leader>/` / `<leader>sg` / `<leader>sG` | Grep (root dir / root dir / cwd) |
+| `<leader>sw` / `<leader>sW` | Grep word or selection (root dir / cwd) |
+| `<leader>sd` / `<leader>sD` | Diagnostics / buffer diagnostics |
+| `<leader>ss` / `<leader>sS` | LSP symbols / workspace symbols (when an LSP attaches) |
+| `<leader>sh` `sk` `sm` `sq` `su` … | Help, keymaps, marks, quickfix, undo, … |
+| `<leader>n` | Notification history |
 
 ### Files, windows, navigation
 
 | Key | Action |
 | --- | --- |
-| `<leader>e` | Explorer at project root (netrw sidebar) |
+| `<leader>e` | Explorer at project root (snacks explorer) |
 | `<leader>E` | Explorer at cwd |
-| `<leader>f` | Format buffer |
+| `<leader>cf` | Format buffer |
 | `<leader>q` | Diagnostics to quickfix list |
 | `<leader>vs` | Select Python virtualenv |
 | `<C-h>` `<C-j>` `<C-k>` `<C-l>` | Move between windows |
