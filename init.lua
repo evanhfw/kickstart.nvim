@@ -599,7 +599,27 @@ do
 end
 
 -- ============================================================
--- SECTION 6: LSP
+-- SECTION 6: FILE EXPLORER (netrw, built-in)
+-- https://vonheikemen.github.io/devlog/tools/using-netrw-vim-builtin-file-explorer/
+-- ============================================================
+do
+  -- Sane defaults: tree listing, no banner, hide dotfiles and VCS noise.
+  -- Keep the browsing directory in sync with the current directory.
+  vim.g.netrw_banner = 0
+  vim.g.netrw_liststyle = 3 -- tree view
+  vim.g.netrw_altv = 1 -- i<C-w> opens vsplit to the right
+  vim.g.netrw_winsize = 25 -- 25% width for the tree window
+  vim.g.netrw_list_hide = [[\(^\|\s\s\)\zs\.\S\+]] -- hide dotfiles
+
+  -- Toggle a left sidebar explorer (netrw). Press again to close.
+  vim.keymap.set('n', '<leader>e', '<cmd>Lexplore<cr>', { desc = 'Toggle file explorer (netrw)' })
+
+  -- Open the explorer in this window.
+  vim.keymap.set('n', '<leader>E', '<cmd>Explore<cr>', { desc = 'File explorer' })
+end
+
+-- ============================================================
+-- SECTION 7: LSP
 -- LSP keymaps, server configuration, Mason tools installations
 -- ============================================================
 do
@@ -790,7 +810,7 @@ do
 end
 
 -- ============================================================
--- SECTION 7: FORMATTING
+-- SECTION 8: FORMATTING
 -- conform.nvim setup and keymap
 -- ============================================================
 do
@@ -828,7 +848,7 @@ do
 end
 
 -- ============================================================
--- SECTION 8: AUTOCOMPLETE & SNIPPETS
+-- SECTION 9: AUTOCOMPLETE & SNIPPETS
 -- blink.cmp and luasnip setup
 -- ============================================================
 do
@@ -907,7 +927,7 @@ do
 end
 
 -- ============================================================
--- SECTION 9: TREESITTER
+-- SECTION 10: TREESITTER
 -- Parser installation, syntax highlighting, folds, indentation
 -- ============================================================
 do
@@ -973,7 +993,7 @@ do
 end
 
 -- ============================================================
--- SECTION 10: OPTIONAL EXAMPLES / NEXT STEPS
+-- SECTION 11: OPTIONAL EXAMPLES / NEXT STEPS
 -- kickstart.plugins.* examples
 -- ============================================================
 do

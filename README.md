@@ -38,7 +38,7 @@ Then install the Mason-managed tools inside Neovim:
 | Lint | nvim-lint: markdownlint (markdown), ruff (Python), golangci-lint (Go) |
 | Format | conform.nvim — format-on-save disabled, manual with `<leader>f` |
 | Editing | mini.ai, mini.surround, nvim-autopairs, nvim-treesitter (auto-installs parsers) |
-| Navigation | harpoon2, venv-selector |
+| Navigation | harpoon2, venv-selector, netrw |
 
 Notes:
 
@@ -61,6 +61,8 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 
 | Key | Action |
 | --- | --- |
+| `<leader>e` | Toggle netrw sidebar (Lexplore) |
+| `<leader>E` | Open netrw in current dir (Explore) |
 | `<leader>f` | Format buffer |
 | `<leader>q` | Diagnostics to quickfix list |
 | `<leader>vs` | Select Python virtualenv |
