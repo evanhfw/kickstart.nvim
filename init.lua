@@ -444,6 +444,23 @@ do
     vim.keymap.set('n', '<leader>gG', function() Snacks.lazygit { cwd = vim.uv.cwd() } end, { desc = 'Lazygit (cwd)' })
   end
 
+  -- Rest of LazyVim's <leader>g group (git.lua / config/keymaps.lua upstream).
+  -- All of these shell out to `git`; only <leader>gi/gI/gp/gP need the `gh` CLI.
+  for _, k in ipairs {
+    { '<leader>gL', function() Snacks.picker.git_log() end, 'Git Log (cwd)' },
+    { '<leader>gb', function() Snacks.picker.git_log_line() end, 'Git Blame Line' },
+    { '<leader>gf', function() Snacks.picker.git_log_file() end, 'Git Current File History' },
+    { '<leader>gl', function() Snacks.picker.git_log { cwd = root { git_only = true } } end, 'Git Log' },
+    { '<leader>gB', function() Snacks.gitbrowse() end, 'Git Browse (open)', { 'n', 'x' } },
+    { '<leader>gY', function() Snacks.gitbrowse { open = function(url) vim.fn.setreg('+', url) end, notify = false } end, 'Git Browse (copy)', { 'n', 'x' } },
+    { '<leader>gi', function() Snacks.picker.gh_issue() end, 'GitHub Issues (open)' },
+    { '<leader>gI', function() Snacks.picker.gh_issue { state = 'all' } end, 'GitHub Issues (all)' },
+    { '<leader>gp', function() Snacks.picker.gh_pr() end, 'GitHub Pull Requests (open)' },
+    { '<leader>gP', function() Snacks.picker.gh_pr { state = 'all' } end, 'GitHub Pull Requests (all)' },
+  } do
+    vim.keymap.set(k[4] or 'n', k[1], k[2], { desc = k[3] })
+  end
+
   -- Useful plugin to show you pending keybinds.
   vim.pack.add { gh 'folke/which-key.nvim' }
   require('which-key').setup {
@@ -459,7 +476,10 @@ do
       { '<leader>g', group = 'Git', mode = { 'n', 'x' } },
       { '<leader>gh', group = 'Git Hunks', mode = { 'n', 'x' } },
       { '<leader>b', group = 'Buffer' },
-      { 'gr', group = 'LSP Actions', mode = { 'n' } },
+      { 'g', group = 'Goto', mode = { 'n', 'x' } },
+      { '[', group = 'Prev', mode = { 'n' } },
+      { ']', group = 'Next', mode = { 'n' } },
+      { '<leader>x', group = 'Diagnostics/Quickfix' },
     },
   }
 
@@ -555,6 +575,8 @@ do
     picker = {},
     explorer = {},
     notifier = {},
+    -- Enables LazyVim's ]] / [[ / <a-n> / <a-p> reference jumps.
+    words = {},
   }
 
   -- LazyVim.pick("files") semantics: root the picker at the project root and
@@ -626,16 +648,19 @@ do
     group = vim.api.nvim_create_augroup('snacks-lsp-attach', { clear = true }),
     callback = function(event)
       local buf = event.buf
-      local function map(lhs, rhs, desc)
-        vim.keymap.set('n', lhs, rhs, { buffer = buf, desc = desc })
+      local function map(lhs, rhs, desc, opts)
+        vim.keymap.set('n', lhs, rhs, vim.tbl_extend('force', { buffer = buf, desc = desc }, opts or {}))
       end
 
-      map('grr', function() Snacks.picker.lsp_references() end, '[G]oto [R]eferences')
-      map('gri', function() Snacks.picker.lsp_implementations() end, '[G]oto [I]mplementation')
-      map('grd', function() Snacks.picker.lsp_definitions() end, '[G]oto [D]efinition')
-      map('gO', function() Snacks.picker.lsp_symbols() end, 'Open Document Symbols')
-      map('gW', function() Snacks.picker.lsp_workspace_symbols() end, 'Open Workspace Symbols')
-      map('grt', function() Snacks.picker.lsp_type_definitions() end, '[G]oto [T]ype Definition')
+      -- LazyVim's editor.snacks_picker extra: goto keys open a picker.
+      -- `gr` is mapped directly (nowait), which shadows Neovim's grn/gra defaults;
+      -- rename and code action live in the <leader>c group instead.
+      map('gd', function() Snacks.picker.lsp_definitions() end, 'Goto Definition')
+      map('gr', function() Snacks.picker.lsp_references() end, 'References', { nowait = true })
+      map('gI', function() Snacks.picker.lsp_implementations() end, 'Goto Implementation')
+      map('gy', function() Snacks.picker.lsp_type_definitions() end, 'Goto T[y]pe Definition')
+      map('gai', function() Snacks.picker.lsp_incoming_calls() end, 'C[a]lls Incoming')
+      map('gao', function() Snacks.picker.lsp_outgoing_calls() end, 'C[a]lls Outgoing')
       map('<leader>ss', function() Snacks.picker.lsp_symbols() end, 'LSP Symbols')
       map('<leader>sS', function() Snacks.picker.lsp_workspace_symbols() end, 'LSP Workspace Symbols')
     end,
@@ -704,15 +729,26 @@ do
 
       -- Rename the variable under your cursor.
       --  Most Language Servers support renaming across files, etc.
-      map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
+      --  LazyVim puts these in the <leader>c (code) group; gr itself is References.
+      map('<leader>cr', vim.lsp.buf.rename, '[C]ode [R]ename')
+      map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
+      map('<leader>cR', function() Snacks.rename.rename_file() end, '[C]ode Rename [F]ile')
+      map('<leader>cl', function() Snacks.picker.lsp_config() end, '[C]ode [L]sp Info')
+      map('<leader>cd', vim.diagnostic.open_float, '[C]ode Line [D]iagnostics')
+      map('<leader>cm', '<cmd>Mason<cr>', '[C]ode [M]ason')
 
-      -- Execute a code action, usually your cursor needs to be on top of an error
-      -- or a suggestion from your LSP for this to activate.
-      map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
+      -- Hover and signature help, as in LazyVim.
+      map('K', vim.lsp.buf.hover, 'Hover')
+      map('gK', vim.lsp.buf.signature_help, 'Signature Help')
+      map('<c-k>', vim.lsp.buf.signature_help, 'Signature Help', 'i')
+
+      -- Jump between references of the word under the cursor.
+      map(']]', function() Snacks.words.jump(vim.v.count1) end, 'Next Reference')
+      map('[[', function() Snacks.words.jump(-vim.v.count1) end, 'Prev Reference')
 
       -- WARN: This is not Goto Definition, this is Goto Declaration.
       --  For example, in C this would take you to the header.
-      map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+      map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
       -- The following two autocommands are used to highlight references of the
       -- word under your cursor when your cursor rests there for a little while.

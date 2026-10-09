@@ -12,6 +12,8 @@ It uses the built-in `vim.pack` plugin manager (no lazy.nvim).
 - Neovim 0.12+ (latest stable)
 - `git`, `make`, `unzip`, a C compiler
 - `ripgrep`, `fd`, `tree-sitter` CLI, a Nerd Font
+- `lazygit` (optional, for `<leader>gg`/`gG`)
+- `gh` (optional, only for the GitHub keymaps `<leader>gi/gI/gp/gP`)
 - `go` (Go development) and Node.js/`npm` (for pyright) on `PATH`
 
 ## Setup on a new machine
@@ -33,7 +35,8 @@ Then install the Mason-managed tools inside Neovim:
 | --- | --- |
 | UI | tokyonight-night, mini.statusline, which-key, indent-blankline, todo-comments, gitsigns |
 | Search | snacks.picker — LazyVim's keymaps (`<leader><leader>`/`ff`/`fg`/`sg`/`sd`/`sw`/`ss` …) |
-| LSP | lua_ls, gopls, pyright — auto-installed and enabled via Mason |
+| LSP | lua_ls, gopls, pyright — auto-installed and enabled via Mason; LazyVim keymaps (`gd`/`gr`/`gI`/`gy`, `<leader>c*`) |
+| Git | gitsigns hunks (`<leader>gh*`), lazygit (`<leader>gg`/`gG`), snacks.picker git log/blame/diff/status (`<leader>g*`) |
 | Completion | blink.cmp (rust fuzzy matcher), LuaSnip, friendly-snippets |
 | Lint | nvim-lint: markdownlint (markdown), ruff (Python), golangci-lint (Go) |
 | Format | conform.nvim — format-on-save disabled, manual with `<leader>cf` |
@@ -43,7 +46,7 @@ Then install the Mason-managed tools inside Neovim:
 Notes:
 
 - The `ruff` language server is disabled on purpose (see `lua/custom/plugins/lint.lua`) because Python linting runs through nvim-lint instead.
-- Format-on-save is off. To enable it per filetype, uncomment the entry in `enabled_filetypes` in `init.lua` (Section 7).
+- Format-on-save is off. To enable it per filetype, uncomment the entry in `enabled_filetypes` in `init.lua` (Section 8, *Formatting*).
 
 ## Keymaps
 
@@ -98,18 +101,46 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 | `ih` | Select hunk (text object) |
 | `<leader>gg` / `<leader>gG` | Lazygit (root dir / cwd) |
 
-### LSP (when a server attaches)
+### Git (repo-wide, snacks.picker)
+
+These mirror LazyVim's `<leader>g` group. All of them shell out to the `git`
+binary — only the GitHub entries need the `gh` CLI.
 
 | Key | Action |
 | --- | --- |
-| `grn` | Rename symbol |
-| `gra` | Code action |
-| `grr` / `gri` / `grd` / `grt` / `grD` | References / implementation / definition / type definition / declaration |
-| `gO` / `gW` | Document / workspace symbols |
-| `K` | Hover documentation |
+| `<leader>gs` / `<leader>gS` | Status / stash |
+| `<leader>gd` / `<leader>gD` | Diff hunks / diff against `origin` |
+| `<leader>gl` / `<leader>gL` | Log (root dir / cwd) |
+| `<leader>gf` / `<leader>gb` | Current file history / blame line |
+| `<leader>gB` / `<leader>gY` | Browse in browser (open / copy URL) |
+| `<leader>gi` / `<leader>gI` | GitHub issues (open / all) — needs `gh` |
+| `<leader>gp` / `<leader>gP` | GitHub PRs (open / all) — needs `gh` |
+
+### LSP (when a server attaches)
+
+Keymaps follow LazyVim. Note that `gr` is a direct mapping to References
+(`nowait`), so Neovim's built-in `grn`/`gra` are shadowed — rename and code
+action live in the `<leader>c` group instead, exactly as in LazyVim.
+
+| Key | Action |
+| --- | --- |
+| `gd` / `gD` | Goto definition / declaration (picker) |
+| `gr` | References (picker, `nowait`) |
+| `gI` / `gy` | Goto implementation / type definition (picker) |
+| `gai` / `gao` | Incoming / outgoing calls (picker) |
+| `K` / `gK` | Hover documentation / signature help |
+| `<C-k>` | Signature help (insert mode) |
+| `]]` / `[[` | Next / previous reference (`snacks.words`) |
+| `<leader>cr` / `<leader>cR` | Rename symbol / rename file |
+| `<leader>ca` | Code action |
+| `<leader>cl` / `<leader>cd` / `<leader>cm` | LSP info / line diagnostics / Mason |
+| `<leader>ss` / `<leader>sS` | LSP symbols / workspace symbols |
 | `<leader>th` | Toggle inlay hints (when supported) |
 | `[d` / `]d` | Previous / next diagnostic |
 | `[D` / `]D` | First / last diagnostic |
+
+`gi` is left at Neovim's built-in behaviour (jump to the last insert position);
+LazyVim uses `gI` for implementation.
 
 ### Editing
 
