@@ -957,10 +957,19 @@ do
       -- <c-space>: Open menu or open docs if already open
       -- <c-n>/<c-p> or <up>/<down>: Select next/previous item
       -- <c-e>: Hide menu
-      -- <c-k>: Toggle signature help
+      -- <c-y>: Accept
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
       preset = 'default',
+
+      -- Menu navigation on <c-j>/<c-k>. Both are safe to take over in insert
+      -- mode: <c-j> is just another newline (Vim: "i_CTRL-J", <CR> still works)
+      -- and <c-k> only starts a digraph. `fallback` keeps that built-in
+      -- behaviour when the menu is closed.
+      -- This intentionally gives up blink's <c-k> signature help; `gK` still
+      -- opens it in normal mode, and signature.enabled auto-shows while typing.
+      ['<c-j>'] = { 'select_next', 'fallback' },
+      ['<c-k>'] = { 'select_prev', 'fallback' },
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps

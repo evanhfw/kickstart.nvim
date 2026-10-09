@@ -156,11 +156,25 @@ LazyVim uses `gI` for implementation.
 | Key | Action |
 | --- | --- |
 | `<C-y>` | Accept completion |
-| `<C-n>` / `<C-p>` | Next / previous item |
+| `<C-j>` / `<C-k>` | Next / previous item |
+| `<C-n>` / `<C-p>` | Next / previous item (preset default) |
+| `<Up>` / `<Down>` | Next / previous item (preset default) |
 | `<C-space>` | Open menu or docs |
 | `<C-e>` | Hide menu |
-| `<C-k>` | Toggle signature help |
+| `<C-s>` | Signature help (Neovim 0.11+ built-in) |
 | `<Tab>` / `<S-Tab>` | Jump through snippet placeholders |
+
+`<C-j>`/`<C-k>` are customised on top of the `default` preset. Both are free in
+insert mode (`<C-j>` duplicates `<CR>`, `<C-k>` only starts a digraph), and the
+`fallback` command restores that built-in behaviour whenever the menu is closed.
+This takes `<C-k>` away from blink's signature help, which Neovim 0.11+ already
+binds to `<C-s>` in insert mode; `gK` in normal mode works too, and
+`signature.enabled` auto-shows it while typing arguments.
+`<CR>` is left to nvim-autopairs (newline when the menu is closed).
+
+> **Note:** `<C-s>` requires `stty -ixon`, otherwise the terminal treats it as
+> XOFF and freezes output. This config sets it in `~/.config/zsh/.zshrc`; on
+> another machine add `stty -ixon` to your shell rc.
 
 ## Maintenance
 
