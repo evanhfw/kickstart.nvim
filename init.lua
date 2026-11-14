@@ -852,7 +852,10 @@ do
 
   -- Translates between nvim-lspconfig server names and mason.nvim package names (e.g. lua_ls <-> lua-language-server)
   require('mason-lspconfig').setup {
-    automatic_enable = true, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
+    -- false = hanya server di tabel `servers` yang di-enable. Dengan true, SETIAP server
+    -- yang terpasang di Mason ikut aktif — kalau pyright dan basedpyright dua-duanya
+    -- terpasang, keduanya menempel ke buffer Python dan hasil picker jadi dobel.
+    automatic_enable = false,
   }
 
   -- Ensure the servers and tools above are installed
@@ -868,6 +871,12 @@ do
     'golangci-lint', -- Go linter for nvim-lint
     'markdownlint', -- Markdown linter for nvim-lint
   })
+
+  -- pyright disediakan paket nix (pkgs.pyright), bukan Mason: mason/bin ada di
+  -- depan PATH sehingga instalasi Mason yang rusak/terpisah akan menutupi binary
+  -- yang berfungsi. Kalau kamu pindah mesin tanpa pyright dari nix, hapus baris ini
+  -- supaya Mason yang memasangnya.
+  ensure_installed = vim.tbl_filter(function(name) return name ~= 'pyright' end, ensure_installed)
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
