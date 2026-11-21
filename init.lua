@@ -254,6 +254,16 @@ do
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
   })
+
+  -- Neovim core hanya mengenali yaml untuk compose file; LSP compose butuh ft ini.
+  vim.filetype.add {
+    filename = {
+      ['compose.yaml'] = 'yaml.docker-compose',
+      ['compose.yml'] = 'yaml.docker-compose',
+      ['docker-compose.yaml'] = 'yaml.docker-compose',
+      ['docker-compose.yml'] = 'yaml.docker-compose',
+    },
+  }
 end
 
 -- ============================================================
@@ -796,6 +806,8 @@ do
   local servers = {
     -- clangd = {},
     gopls = {},
+    dockerls = {},
+    docker_compose_language_service = {},
     pyright = {},
     -- tsc = {},
     --
@@ -869,6 +881,7 @@ do
   vim.list_extend(ensure_installed, {
     'ruff', -- Python linter for nvim-lint
     'golangci-lint', -- Go linter for nvim-lint
+    'hadolint', -- Dockerfile linter for nvim-lint
     'markdownlint', -- Markdown linter for nvim-lint
   })
 
@@ -912,6 +925,7 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
+      go = { 'goimports', 'gofumpt' },
       -- rust = { 'rustfmt' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
@@ -969,7 +983,7 @@ do
       -- <c-y>: Accept
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'super-tab', -- <Tab> accept; fallback ke indent saat menu tutup
 
       -- Menu navigation on <c-j>/<c-k>. Both are safe to take over in insert
       -- mode: <c-j> is just another newline (Vim: "i_CTRL-J", <CR> still works)
@@ -1031,7 +1045,7 @@ do
   require('treesitter-context').setup {}
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'diff', 'dockerfile', 'go', 'gomod', 'gosum', 'gowork', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
