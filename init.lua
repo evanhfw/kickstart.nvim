@@ -808,6 +808,7 @@ do
     gopls = {},
     dockerls = {},
     docker_compose_language_service = {},
+    sqls = {},
     pyright = {},
     -- tsc = {},
     --
@@ -882,6 +883,7 @@ do
     'ruff', -- Python linter for nvim-lint
     'golangci-lint', -- Go linter for nvim-lint
     'hadolint', -- Dockerfile linter for nvim-lint
+    'sql-formatter', -- SQL formatter for conform
     'markdownlint', -- Markdown linter for nvim-lint
   })
 
@@ -924,8 +926,12 @@ do
       lsp_format = 'fallback', -- Use external formatters if configured below, otherwise use LSP formatting. Set to `false` to disable LSP formatting entirely.
     },
     -- You can also specify external formatters in here.
+    formatters = {
+      sql_formatter = { args = { '--language', 'postgresql' } }, -- ganti ke mysql/sqlite bila perlu
+    },
     formatters_by_ft = {
       go = { 'goimports', 'gofumpt' },
+      sql = { 'sql_formatter' },
       -- rust = { 'rustfmt' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
@@ -1045,7 +1051,7 @@ do
   require('treesitter-context').setup {}
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'dockerfile', 'go', 'gomod', 'gosum', 'gowork', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'diff', 'dockerfile', 'go', 'gomod', 'gosum', 'gowork', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'sql', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
