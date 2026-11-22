@@ -808,7 +808,12 @@ do
     gopls = {},
     dockerls = {},
     docker_compose_language_service = {},
-    sqls = {},
+    postgres_lsp = {
+      -- Default upstream: hanya aktif kalau ada postgres-language-server.jsonc.
+      -- Di sini .sql dianggap Postgres, jadi syntax check + format jalan di project mana pun.
+      root_markers = { '.git', 'postgres-language-server.jsonc' },
+      workspace_required = false,
+    },
     pyright = {},
     -- tsc = {},
     --
