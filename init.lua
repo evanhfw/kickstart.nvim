@@ -589,13 +589,12 @@ do
     words = {},
   }
 
-  -- LazyVim.pick("files") semantics: root the picker at the project root and
-  -- use git_files when the root is a git repo, find_files otherwise.
+  -- LazyVim.pick("files") semantics: root the picker at the project root.
+  -- `files` (fd/rg) lists tracked AND untracked files; it only skips paths
+  -- matched by .gitignore. Inside the picker: <a-h> toggles hidden,
+  -- <a-i> toggles ignored. `<leader>fg` stays tracked-only on purpose.
   local function pick(source, opts)
     opts = vim.tbl_extend('force', { cwd = root() }, opts or {})
-    if source == 'files' then
-      source = vim.fn.isdirectory(opts.cwd .. '/.git') == 1 and 'git_files' or 'files'
-    end
     return Snacks.picker.pick(source, opts)
   end
 
