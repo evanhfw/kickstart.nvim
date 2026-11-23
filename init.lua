@@ -212,7 +212,10 @@ do
     },
   }
 
-  vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+  -- Fill Neovim's built-in lists from diagnostics. Unlike <leader>sd (snacks
+  -- picker), these work without any plugin and render the real quickfix/loclist.
+  vim.keymap.set('n', '<leader>xq', function() vim.diagnostic.setqflist() end, { desc = 'Diagnostics → quickfix list' })
+  vim.keymap.set('n', '<leader>xl', function() vim.diagnostic.setloclist() end, { desc = 'Diagnostics → location list' })
 
   -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
   -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -479,17 +482,25 @@ do
     icons = { mappings = vim.g.have_nerd_font },
     -- Document existing key chains
     spec = {
-      { '<leader>t', group = '[T]oggle' },
-      { '<leader>f', group = '[F]ind' },
-      { '<leader>s', group = '[S]earch' },
-      { '<leader>c', group = '[C]ode' },
-      { '<leader>g', group = 'Git', mode = { 'n', 'x' } },
-      { '<leader>gh', group = 'Git Hunks', mode = { 'n', 'x' } },
-      { '<leader>b', group = 'Buffer' },
+      -- Icons are explicit: the built-in which-key rules match on the desc,
+      -- and labels like "[C]ode" no longer match the "code" pattern.
+      { '<leader>t', group = '[T]oggle', icon = { icon = ' ', color = 'yellow' } },
+      { '<leader>f', group = '[F]ind', icon = { icon = ' ', color = 'green' } },
+      { '<leader>s', group = '[S]earch', icon = { icon = '󰍉 ', color = 'green' } },
+      { '<leader>c', group = '[C]ode', icon = { icon = ' ', color = 'orange' } },
+      { '<leader>g', group = 'Git', icon = { icon = '󰊢 ', color = 'orange' }, mode = { 'n', 'x' } },
+      { '<leader>gh', group = 'Git Hunks', icon = { icon = '󰊢 ', color = 'orange' }, mode = { 'n', 'x' } },
+      { '<leader>u', group = '[U]I', icon = { icon = '󰙵 ', color = 'cyan' } },
+      { '<leader>v', group = 'Venv', icon = { icon = '󰌠 ', color = 'yellow' } },
+      { '<leader>x', group = 'Diagnostics/Quickfix', icon = { icon = '󱖫 ', color = 'green' } },
+      -- Single mappings that the built-in rules don't cover.
+      { '<leader>e', icon = { icon = '󰙅 ', color = 'azure' } },
+      { '<leader>E', icon = { icon = '󰙅 ', color = 'azure' } },
+      { '<leader>/', icon = { icon = '󰍉 ', color = 'green' } },
+      { '<leader>:', icon = { icon = '󰋚 ', color = 'azure' } },
       { 'g', group = 'Goto', mode = { 'n', 'x' } },
       { '[', group = 'Prev', mode = { 'n' } },
       { ']', group = 'Next', mode = { 'n' } },
-      { '<leader>x', group = 'Diagnostics/Quickfix' },
     },
   }
 
@@ -813,7 +824,21 @@ do
       root_markers = { '.git', 'postgres-language-server.jsonc' },
       workspace_required = false,
     },
-    pyright = {},
+    pyright = {
+      -- Default pyright tidak mencari venv sendiri: editable install uv/pip
+      -- hanya terlihat lewat .venv, tanpa ini import src-layout jadi
+      -- "could not be resolved from source". venv-selector tetap bisa menimpa.
+      before_init = function(_, config)
+        local root = config.root_dir
+        local python = root and (root .. '/.venv/bin/python')
+        if not python or not vim.uv.fs_stat(python) then return end
+        config.settings.python = vim.tbl_deep_extend('force', config.settings.python or {}, {
+          pythonPath = python,
+          venvPath = root,
+          venv = '.venv',
+        })
+      end,
+    },
     -- tsc = {},
     --
     -- Some languages (like rust) have entire language plugins that can be useful:
@@ -937,8 +962,8 @@ do
       go = { 'goimports', 'gofumpt' },
       sql = { 'sql_formatter' },
       -- rust = { 'rustfmt' },
-      -- Conform can also run multiple formatters sequentially
-      -- python = { "isort", "black" },
+      -- Run sequentially: fix import order (I001) lalu format.
+      python = { 'ruff_organize_imports', 'ruff_format' },
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
       -- javascript = { "prettierd", "prettier", stop_after_first = true },

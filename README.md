@@ -74,7 +74,7 @@ Leader is `<Space>`. Press `<Space>` and pause to see everything via which-key.
 | `<leader>e` | Explorer at project root (snacks explorer) |
 | `<leader>E` | Explorer at cwd |
 | `<leader>cf` | Format buffer |
-| `<leader>q` | Diagnostics to quickfix list |
+| `<leader>xq` / `<leader>xl` | Diagnostics → quickfix / location list |
 | `<leader>vs` | Select Python virtualenv |
 | `<C-h>` `<C-j>` `<C-k>` `<C-l>` | Move between windows |
 
