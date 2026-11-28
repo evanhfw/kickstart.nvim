@@ -563,6 +563,22 @@ do
   -- - sr)'  - [S]urround [R]eplace [)] [']
   require('mini.surround').setup()
 
+  -- Move lines/selection naik-turun (dan kiri-kanan) dengan Shift+Arrow:
+  --   normal mode  <S-Up>/<S-Down> pindah baris, visual mode pindah blok.
+  -- Reindent otomatis saat pindah vertikal, mengikuti indent language.
+  require('mini.move').setup {
+    mappings = {
+      up = '<S-Up>',
+      down = '<S-Down>',
+      left = '<S-Left>',
+      right = '<S-Right>',
+      line_up = '<S-Up>',
+      line_down = '<S-Down>',
+      line_left = '<S-Left>',
+      line_right = '<S-Right>',
+    },
+  }
+
   -- Simple and easy statusline.
   --  You could remove this setup call if you don't like it,
   --  and try some other statusline plugin
