@@ -760,7 +760,10 @@ do
       -- Hover and signature help, as in LazyVim.
       map('K', vim.lsp.buf.hover, 'Hover')
       map('gK', vim.lsp.buf.signature_help, 'Signature Help')
-      map('<c-k>', vim.lsp.buf.signature_help, 'Signature Help', 'i')
+      -- Jangan map <c-k> di insert: mapping buffer-local ini mengalahkan
+      -- select_prev milik blink, jadi menu completion tidak bisa naik dan yang
+      -- muncul malah "No signature help available". Signature tetap tampil
+      -- otomatis (blink signature.enabled) dan manual lewat gK.
 
       -- Jump between references of the word under the cursor.
       map(']]', function() Snacks.words.jump(vim.v.count1) end, 'Next Reference')
@@ -1019,6 +1022,14 @@ do
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
       preset = 'super-tab', -- <Tab> accept; fallback ke indent saat menu tutup
+
+      -- Preset super-tab menaruh `snippet_active() and accept()` lebih dulu,
+      -- jadi saat snippet aktif (placeholder `self` di __init__ dsb.) <Tab>
+      -- menelan completion yang kebetulan terbuka, bukan lompat placeholder.
+      -- Balik urutannya: snippet dulu, baru accept, lalu indent.
+      ['<Tab>'] = { 'snippet_forward', 'select_and_accept', 'fallback' },
+      -- Accept eksplisit, karena <Tab> di dalam snippet sekarang selalu jump.
+      ['<c-y>'] = { 'select_and_accept', 'fallback' },
 
       -- Menu navigation on <c-j>/<c-k>. Both are safe to take over in insert
       -- mode: <c-j> is just another newline (Vim: "i_CTRL-J", <CR> still works)
